@@ -1,4 +1,4 @@
-package one2oneChat;
+package myGUIChat;
 
 import javax.swing.*;
 import java.awt.*;
