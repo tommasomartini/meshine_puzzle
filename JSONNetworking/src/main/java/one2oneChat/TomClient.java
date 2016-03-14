@@ -28,6 +28,9 @@ public class TomClient implements Runnable {
 	public TomClient(Socket _socket) {
 		socket = _socket;
 	}
+	
+	public TomClient() {
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
@@ -84,5 +87,4 @@ public class TomClient implements Runnable {
 			e.printStackTrace();
 		}
 	}
-
 }

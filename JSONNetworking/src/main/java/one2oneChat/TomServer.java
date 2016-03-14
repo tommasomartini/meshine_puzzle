@@ -19,6 +19,41 @@ import java.util.Scanner;
  */
 public class TomServer implements Runnable {
 	private OutputStream outputStream;
+	private ServerSocket serverSocket;
+	private Socket clientSocket;
+	
+	public TomServer(int _port) {
+		try {
+			serverSocket = new ServerSocket(_port);
+			System.out.print("TomServer waiting for a client on port " + _port + "...");
+			clientSocket = serverSocket.accept( );	// catch the client socket connecting
+			System.out.println("client connected!");
+
+			OutputStream clientOutputStream = clientSocket.getOutputStream();
+
+			ClientListener clientListener = new ClientListener();
+			Thread listenerThread = new Thread(clientListener);
+			listenerThread.start();
+
+//			InputStream clientInputStream = clientSocket.getInputStream();
+//			InputStreamReader inputReader = new InputStreamReader(clientInputStream);
+//			BufferedReader bufferedReader = new BufferedReader(inputReader);     
+//			String inputString;
+//			System.out.println("TomServer started to listen to client");
+//			try {
+//				while ((inputString = bufferedReader.readLine()) != null) {    
+//					System.out.println("< " + inputString);
+//				}
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}       
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
 	public TomServer(OutputStream _outputStream) {
 		System.out.println("Server creato");
@@ -41,45 +76,41 @@ public class TomServer implements Runnable {
 
 	}
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		ServerSocket serverSocket;
-		try {
-			serverSocket = new ServerSocket(3003);
-			System.out.print("TomServer waiting for a client...");
-			Socket clientSocket = serverSocket.accept( );	// catch the client socket connecting
-			System.out.println("client connected!");
-			
-			OutputStream clientOutputStream = clientSocket.getOutputStream();
-			
-			TomServer tomServer = new TomServer(clientOutputStream);
-			Thread myThread = new Thread(tomServer);
-			myThread.start();
-			
-			InputStream clientInputStream = clientSocket.getInputStream();
-			InputStreamReader inputReader = new InputStreamReader(clientInputStream);
-			BufferedReader bufferedReader = new BufferedReader(inputReader);     
-			String inputString;
-			System.out.println("TomServer started to listen to client");
-			try {
-				while ((inputString = bufferedReader.readLine()) != null) {    
-					System.out.println("< " + inputString);
-				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}       
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		
-		
-		
-	}
+//	/**
+//	 * @param args
+//	 */
+//	public static void main(String[] args) {
+//		ServerSocket serverSocket;
+//		try {
+//			serverSocket = new ServerSocket(3003);
+//			System.out.print("TomServer waiting for a client...");
+//			Socket clientSocket = serverSocket.accept( );	// catch the client socket connecting
+//			System.out.println("client connected!");
+//
+//			OutputStream clientOutputStream = clientSocket.getOutputStream();
+//
+//			TomServer tomServer = new TomServer(clientOutputStream);
+//			Thread myThread = new Thread(tomServer);
+//			myThread.start();
+//
+//			InputStream clientInputStream = clientSocket.getInputStream();
+//			InputStreamReader inputReader = new InputStreamReader(clientInputStream);
+//			BufferedReader bufferedReader = new BufferedReader(inputReader);     
+//			String inputString;
+//			System.out.println("TomServer started to listen to client");
+//			try {
+//				while ((inputString = bufferedReader.readLine()) != null) {    
+//					System.out.println("< " + inputString);
+//				}
+//			} catch (IOException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}       
+//
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	}
 
 }
