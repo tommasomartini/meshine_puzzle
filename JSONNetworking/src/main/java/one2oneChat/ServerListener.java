@@ -18,12 +18,16 @@ import java.util.Scanner;
  *
  */
 public class ServerListener implements Runnable {
-	private OutputStream outputStream;
-	private Socket clientSocket;
+	
+	private Socket socket;
 
-	public ServerListener(OutputStream _outputStream) {
-		System.out.println("Server creato");
-		outputStream = _outputStream;
+//	public ServerListener(OutputStream _outputStream) {
+//		System.out.println("Server creato");
+//		outputStream = _outputStream;
+//	}
+	
+	public ServerListener(Socket _socket) {
+		socket = _socket;
 	}
 
 	/* (non-Javadoc)
@@ -31,11 +35,11 @@ public class ServerListener implements Runnable {
 	 */
 	public void run() {
 		try {
-			InputStream clientInputStream = clientSocket.getInputStream();
+			InputStream clientInputStream = socket.getInputStream();
 			InputStreamReader inputReader = new InputStreamReader(clientInputStream);
 			BufferedReader bufferedReader = new BufferedReader(inputReader);     
 			String inputString;
-			System.out.println("TomServer started to listen to client");
+			System.out.println("TomClient started to listen to server");
 
 			while ((inputString = bufferedReader.readLine()) != null) {    
 				System.out.println("< " + inputString);

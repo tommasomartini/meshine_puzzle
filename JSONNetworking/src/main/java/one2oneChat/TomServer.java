@@ -18,7 +18,7 @@ import java.util.Scanner;
  *
  */
 public class TomServer implements Runnable {
-	private OutputStream outputStream;
+//	private OutputStream outputStream;
 	private ServerSocket serverSocket;
 	private Socket clientSocket;
 	
@@ -26,14 +26,7 @@ public class TomServer implements Runnable {
 		try {
 			serverSocket = new ServerSocket(_port);
 			System.out.print("TomServer waiting for a client on port " + _port + "...");
-			clientSocket = serverSocket.accept( );	// catch the client socket connecting
-			System.out.println("client connected!");
-
-			OutputStream clientOutputStream = clientSocket.getOutputStream();
-
-			ClientListener clientListener = new ClientListener();
-			Thread listenerThread = new Thread(clientListener);
-			listenerThread.start();
+			
 
 //			InputStream clientInputStream = clientSocket.getInputStream();
 //			InputStreamReader inputReader = new InputStreamReader(clientInputStream);
@@ -55,25 +48,38 @@ public class TomServer implements Runnable {
 		}
 	}
 	
-	public TomServer(OutputStream _outputStream) {
-		System.out.println("Server creato");
-		outputStream = _outputStream;
-	}
+//	public TomServer(OutputStream _outputStream) {
+//		System.out.println("Server creato");
+//		outputStream = _outputStream;
+//	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
-		System.out.println("Server run");
-		PrintWriter pw = new PrintWriter(outputStream);
-		Scanner keyboard = new Scanner(System.in);
-		while (true) {
-			System.out.print("- ");
-			String inputString = keyboard.nextLine();
-			pw.println(inputString);
-			pw.flush();
-		}
+		try {
+			clientSocket = serverSocket.accept( );
+			System.out.println("client connected!");
 
+			OutputStream clientOutputStream = clientSocket.getOutputStream();
+
+			ClientListener clientListener = new ClientListener(clientSocket);
+			Thread listenerThread = new Thread(clientListener);
+			listenerThread.start();
+
+			System.out.println("Server run");
+			PrintWriter pw = new PrintWriter(clientOutputStream);
+			Scanner keyboard = new Scanner(System.in);
+			while (true) {
+				System.out.print("- ");
+				String inputString = keyboard.nextLine();
+				pw.println(inputString);
+				pw.flush();
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	// catch the client socket connecting
 	}
 
 //	/**

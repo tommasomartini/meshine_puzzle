@@ -29,9 +29,6 @@ public class ClientListener implements Runnable {
 	public ClientListener(Socket _socket) {
 		socket = _socket;
 	}
-	
-	public ClientListener() {
-	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
@@ -42,7 +39,7 @@ public class ClientListener implements Runnable {
 			InputStreamReader inputReader = new InputStreamReader(inputStream);
 			BufferedReader bufferedReader = new BufferedReader(inputReader);     
 			String inputString;
-			System.out.println("TomClient started to listen to server");
+			System.out.println("TomServer started to listen to client");
 
 			while ((inputString = bufferedReader.readLine()) != null) {    
 				System.out.println("< " + inputString);

@@ -23,9 +23,9 @@ public class AppStarter {
 		Thread serverThread = new Thread(tomServer);	
 		serverThread.start();
 		
-//		TomClient tomClient = new TomClient();
-//		Thread clientThread = new Thread(tomClient);
-//		clientThread.start();
+		TomClient tomClient = new TomClient(port);
+		Thread clientThread = new Thread(tomClient);
+		clientThread.start();
 	}
 
 }
