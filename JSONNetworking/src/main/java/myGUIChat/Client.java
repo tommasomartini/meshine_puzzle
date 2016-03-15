@@ -55,6 +55,8 @@ public class Client {
 			jsonObj.put("username", username);
 			jsonObj.put("is_client", new Boolean(true));
 			jsonObj.put("message_type", JSONPacket.LOGIN_STRING);
+			String msgIDstr = "c" + ClientGUI.getNextClientMsgID();
+			jsonObj.put("message_id", msgIDstr);
 			String now = dateFormat.format(new Date());
 			String[] nowParts = now.split(":");
 			JSONObject dateObj = new JSONObject();
@@ -136,6 +138,7 @@ public class Client {
 		String msgUsername;
 		boolean isClient;
 		String timeString;
+		String msgIDstr;
 		
 		public void run() {
 			boolean keepListeningFromServer = true;
@@ -148,11 +151,12 @@ public class Client {
 					msgType = rxPayload.getString("message_type");
 					msgUsername = rxPayload.getString("username");
 					isClient = rxPayload.getBoolean("is_client");
+					msgIDstr = rxPayload.getString("message_id");
 					JSONObject sendingTime = rxPayload.getJSONObject("message_time");
 					int hour = sendingTime.getInt("hour");
 					int minute = sendingTime.getInt("minute");
 					int second = sendingTime.getInt("second");
-					timeString = hour + ":" + minute + ":" + second;
+					timeString = String.format("%02d", hour) + ":" + String.format("%02d", minute) + ":" + String.format("%02d", second);
 					
 //					ChatMessage currentChatMsg = (ChatMessage)inputStream.readObject();
 //					String msg = currentChatMsg.getMessage();
@@ -167,11 +171,28 @@ public class Client {
 							byte[] receivedObjData = jsonPacket.getExtraData();
 							String dataString = new String(receivedObjData);
 							clientGUI.append(msgUsername + "[" + timeString + "] > " + dataString);
+							
+							JSONObject ackObj = new JSONObject();
+							ackObj.put("username", username);
+							ackObj.put("is_client", new Boolean(true));
+							ackObj.put("message_type", JSONPacket.ACK_STRING);
+							String myMsgIDstr = "c" + ClientGUI.getNextClientMsgID();
+							ackObj.put("message_id", myMsgIDstr);
+							String now = dateFormat.format(new Date());
+							String[] nowParts = now.split(":");
+							JSONObject dateObj = new JSONObject();
+							dateObj.put("hour", Integer.parseInt(nowParts[0]));
+							dateObj.put("minute", Integer.parseInt(nowParts[1]));
+							dateObj.put("second", Integer.parseInt(nowParts[2]));
+							ackObj.put("message_time", dateObj);
+
+							JSONPacket jsonPacket = new JSONPacket(ackObj.toString(), msgIDstr.getBytes());	// send back the msg ID
+							sendMessage(jsonPacket);
+							
 						} else if (msgType.equals(JSONPacket.ACK_STRING)) {
 							byte[] receivedObjData = jsonPacket.getExtraData();
 							String msgId = new String(receivedObjData);
-							System.out.println("Message sent at " + msgId + " received");
-							
+							clientGUI.append(msgUsername + " ACK at [" + timeString + "] " + msgId);
 						} else {
 							// do nothing
 						}

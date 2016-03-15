@@ -116,11 +116,12 @@ public class Server implements Runnable {
 				String msgType = receivedObjPayload.getString("message_type");
 				username = receivedObjPayload.getString("username");
 				boolean isClient = receivedObjPayload.getBoolean("is_client");
+				String msgIDstr = receivedObjPayload.getString("message_id");
 				JSONObject sendingTime = receivedObjPayload.getJSONObject("message_time");
 				int hour = sendingTime.getInt("hour");
 				int minute = sendingTime.getInt("minute");
 				int second = sendingTime.getInt("second");
-				String timeString = hour + ":" + minute + ":" + second;
+				String timeString = String.format("%02d", hour) + ":" + String.format("%02d", minute) + ":" + String.format("%02d", second);
 				
 				if (isClient && msgType.equals("login")) {
 					byte[] receivedObjData = firstMessage.getExtraData();
@@ -143,20 +144,20 @@ public class Server implements Runnable {
 				String msgUsername;
 				String msgType;
 				String timeString;
+				String msgIDstr;
 				try {
-//					chatMessage = (ChatMessage)objInputStream.readObject();
-					
 					jsonPacket = (JSONPacket)objInputStream.readObject();
 					
 					JSONObject rxPayload = new JSONObject(jsonPacket.getPayload());
 					msgType = rxPayload.getString("message_type");
 					msgUsername = rxPayload.getString("username");
 					isClient = rxPayload.getBoolean("is_client");
+					msgIDstr = rxPayload.getString("message_id");
 					JSONObject sendingTime = rxPayload.getJSONObject("message_time");
 					int hour = sendingTime.getInt("hour");
 					int minute = sendingTime.getInt("minute");
 					int second = sendingTime.getInt("second");
-					timeString = hour + ":" + minute + ":" + second;
+					timeString = String.format("%02d", hour) + ":" + String.format("%02d", minute) + ":" + String.format("%02d", second);
 				} catch (IOException e) {
 					display(username + " Exception reading Streams: " + e);
 					break;				
@@ -178,6 +179,8 @@ public class Server implements Runnable {
 						ackObj.put("username", "YourServer");
 						ackObj.put("is_client", new Boolean(false));
 						ackObj.put("message_type", JSONPacket.ACK_STRING);
+						String myMsgIDstr = "s" + ServerGUI.getNextServerMsgID();
+						ackObj.put("message_id", myMsgIDstr);
 						String now = dateFormat.format(new Date());
 						String[] nowParts = now.split(":");
 						JSONObject dateObj = new JSONObject();
@@ -186,9 +189,14 @@ public class Server implements Runnable {
 						dateObj.put("second", Integer.parseInt(nowParts[2]));
 						ackObj.put("message_time", dateObj);
 
-						JSONPacket jsonPacket = new JSONPacket(ackObj.toString(), timeString.getBytes());	// send the hour the message has been sent
+						JSONPacket jsonPacket = new JSONPacket(ackObj.toString(), msgIDstr.getBytes());	// send back the msg ID
 						sendMessage(jsonPacket);
 						
+					} else if (msgType.equals(JSONPacket.ACK_STRING)) {
+						System.out.println("ACK RX BY SRERVR");
+						byte[] receivedObjData = jsonPacket.getExtraData();
+						String msgId = new String(receivedObjData);
+						displayChat(msgUsername + " ACK at " + timeString + ": " + msgId);
 					} else {
 						// do nothing
 					}

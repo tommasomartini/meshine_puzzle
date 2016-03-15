@@ -12,6 +12,8 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	
 	private static final long serialVersionUID = 1L;
 	
+	private static int serverMsgID = 0;
+	
 	private JLabel lbMessage;
 	private JTextField tfMessage;
 	private JButton btStopStart;
@@ -79,6 +81,10 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 		taEvent.setCaretPosition(taChat.getText().length() - 1);
 	}
 	
+	public static int getNextServerMsgID() {
+		return serverMsgID++;
+	}
+	
 	public void notifyConnection(boolean isConnected) {
 		connected = isConnected;
 		tfMessage.setEditable(isConnected);
@@ -96,6 +102,8 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 			jsonObj.put("username", "YourServer");
 			jsonObj.put("is_client", new Boolean(false));
 			jsonObj.put("message_type", JSONPacket.MESSAGE_STRING);
+			String msgIDstr = "s" + ServerGUI.getNextServerMsgID();
+			jsonObj.put("message_id", msgIDstr);
 			String now = dateFormat.format(new Date());
 			String[] nowParts = now.split(":");
 			JSONObject dateObj = new JSONObject();

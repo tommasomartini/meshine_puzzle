@@ -18,6 +18,8 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
 	
+	private static int clientMsgID = 0;
+	
 	private JLabel lbUsernameOrMessage;
 	private JTextField tfUsernameOrMessage;
 	private JTextField tfServerAddress, tfServerPort;
@@ -32,8 +34,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 	private SimpleDateFormat dateFormat;
 	private String clientUsername;
 	
-	private static int msgID = 0;
-	private ArrayList<String> pastMessages;
+//	private ArrayList<StorageMessage> pastMessages;
 
 	// Constructor connection receiving a socket number
 	public ClientGUI(String host, int port) {
@@ -41,7 +42,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		defaultPort = port;
 		defaultHost = host;
 		dateFormat = new SimpleDateFormat("HH:mm:ss");
-		pastMessages = new ArrayList<String>();
+//		pastMessages = new ArrayList<StorageMessage>();
 		
 		JPanel northPanel = new JPanel(new GridLayout(3,1));	// panel 3 x 1
 		// 1 North)
@@ -86,7 +87,12 @@ public class ClientGUI extends JFrame implements ActionListener {
 		tfUsernameOrMessage.requestFocus();		// this is automatically focused
 	}
 	
+	public static int getNextClientMsgID() {
+		return clientMsgID++;
+	}
+	
 //	public void recieveServerMsg(String msg) {
+//		StorageMessage storageMessage = new StorageMessage(msg, _ID, _textString)
 //		pastMessages.add(msg);
 //		for (int i = 0; i < pastMessages.size(); i++) {
 //			taChat.append(pastMessages.get(i) + "\n");
@@ -98,6 +104,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 	// called by the Client to append text in the TextArea 
 	public void append(String str) {	
+		taChat.append(str + "\n");
 		taChat.setCaretPosition(taChat.getText().length() - 1);
 	}
 	
@@ -118,6 +125,22 @@ public class ClientGUI extends JFrame implements ActionListener {
 		tfUsernameOrMessage.removeActionListener(this);
 		connected = false;
 	}
+	
+//	public void addStorageMessage(String _timeString, String _textString) {
+////		String txt = "[" + _timeString + "]:" + "* " + _textString;
+//		StorageMessage storageMessage = new StorageMessage(_timeString, "c" + msgID++, _textString);
+//		pastMessages.add(storageMessage);
+//	}
+//	
+//	public void messageReceivedByServer(String _msgID) {
+//		StorageMessage storageMessage;
+//		for (int i = 0; i < pastMessages.size(); i++) {
+//			storageMessage = pastMessages.get(i);
+//			if (storageMessage.ID.equals(_msgID)) {
+//				storageMessage.ID[3] = 's';
+//			}
+//		}
+//	}
 		
 	public void actionPerformed(ActionEvent e) {
 		Object eventSource = e.getSource();		
@@ -134,6 +157,8 @@ public class ClientGUI extends JFrame implements ActionListener {
 				jsonObj.put("username", clientUsername);
 				jsonObj.put("is_client", new Boolean(true));
 				jsonObj.put("message_type", JSONPacket.MESSAGE_STRING);
+				String msgIDstr = "c" + ClientGUI.getNextClientMsgID();
+				jsonObj.put("message_id", msgIDstr);
 				String now = dateFormat.format(new Date());
 				String[] nowParts = now.split(":");
 				JSONObject dateObj = new JSONObject();
@@ -141,7 +166,8 @@ public class ClientGUI extends JFrame implements ActionListener {
 				dateObj.put("minute", Integer.parseInt(nowParts[1]));
 				dateObj.put("second", Integer.parseInt(nowParts[2]));
 				jsonObj.put("message_time", dateObj);
-
+				
+//				addStorageMessage(now, messageString);
 				
 				byte[] dataString = messageString.getBytes();
 				JSONPacket jsonPacket = new JSONPacket(jsonObj.toString(), dataString);
@@ -188,5 +214,18 @@ public class ClientGUI extends JFrame implements ActionListener {
 			tfUsernameOrMessage.addActionListener(this);
 		}
 	}
+	
+//	class StorageMessage {
+//		String timeString;
+//		String ID;
+//		String textString;
+//		boolean receivedByServer;
+//		
+//		public StorageMessage(String _timeString, String _ID, String _textString) {
+//			timeString = _timeString;
+//			ID = _ID;
+//			textString = _textString;
+//		}
+//	}
 }
 
