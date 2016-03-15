@@ -5,6 +5,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import org.json.JSONObject;
@@ -30,6 +31,9 @@ public class ClientGUI extends JFrame implements ActionListener {
 	private String defaultHost;
 	private SimpleDateFormat dateFormat;
 	private String clientUsername;
+	
+	private static int msgID = 0;
+	private ArrayList<String> pastMessages;
 
 	// Constructor connection receiving a socket number
 	public ClientGUI(String host, int port) {
@@ -37,6 +41,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 		defaultPort = port;
 		defaultHost = host;
 		dateFormat = new SimpleDateFormat("HH:mm:ss");
+		pastMessages = new ArrayList<String>();
 		
 		JPanel northPanel = new JPanel(new GridLayout(3,1));	// panel 3 x 1
 		// 1 North)
@@ -80,12 +85,20 @@ public class ClientGUI extends JFrame implements ActionListener {
 		setVisible(true);
 		tfUsernameOrMessage.requestFocus();		// this is automatically focused
 	}
+	
+//	public void recieveServerMsg(String msg) {
+//		pastMessages.add(msg);
+//		for (int i = 0; i < pastMessages.size(); i++) {
+//			taChat.append(pastMessages.get(i) + "\n");
+//			taChat.append(pastMessages.get(i) + "\n");
+//			taChat.append(pastMessages.get(i) + "\n");
+//			taChat.setCaretPosition(taChat.getText().length() - 1);
+//		}
+//	}
 
 	// called by the Client to append text in the TextArea 
-	public void append(String str) {
-		taChat.append(str + "\n");
-//		taChat.setCaretPosition(taChat.getText().length() - 1);
-		taChat.setCaretPosition(2);
+	public void append(String str) {	
+		taChat.setCaretPosition(taChat.getText().length() - 1);
 	}
 	
 	// called by the GUI is the connection failed
