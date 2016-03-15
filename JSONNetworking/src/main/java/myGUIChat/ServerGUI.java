@@ -3,7 +3,7 @@ package myGUIChat;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.function.BooleanSupplier;
+import org.json.JSONObject;
  
 public class ServerGUI extends JFrame implements ActionListener, WindowListener {
 	

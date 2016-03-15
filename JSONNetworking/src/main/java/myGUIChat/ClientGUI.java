@@ -4,6 +4,7 @@ package myGUIChat;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import org.json.JSONObject;
 
 
 /*

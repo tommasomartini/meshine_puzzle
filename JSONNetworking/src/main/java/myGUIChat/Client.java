@@ -2,10 +2,11 @@ package myGUIChat;
 
 
 import java.net.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.io.*;
-import java.util.*;
+import org.json.JSONObject;
 
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
 public class Client {
 
@@ -14,6 +15,7 @@ public class Client {
 	private Socket socket;
 
 	private ClientGUI clientGUI;
+	private SimpleDateFormat dateFormat;
 	
 	private String serverAddress, username;
 	private int port;
@@ -27,6 +29,7 @@ public class Client {
 		this.port = _port;
 		this.username = _username;
 		this.clientGUI = _clientGUI;
+		dateFormat = new SimpleDateFormat("HH:mm:ss");
 	}
 	
 	public boolean startClient() {
@@ -48,6 +51,21 @@ public class Client {
 		}
 		new ListenFromServer().start();
 		try {
+			 JSONObject jsonObj = new JSONObject();
+		     jsonObj.put("username", username);
+		     jsonObj.put("isClient", new Boolean(true));
+		     jsonObj.put("message_type", "hello");
+		     String now = dateFormat.format(new Date());
+		     String[] nowParts = now.split(":");
+		     JSONObject dateObj = new JSONObject();
+		     dateObj.put("hour", Integer.parseInt(nowParts[0]));
+		     dateObj.put("minute", Integer.parseInt(nowParts[1]));
+		     dateObj.put("second", Integer.parseInt(nowParts[2]));
+		     jsonObj.put("message_time", dateObj);
+		     
+		     byte[] currentData = "Hello".getBytes();
+		     JSONPacket jsonPacket = new JSONPacket(jsonObj, currentData);
+			
 			ChatMessage myMsg = new ChatMessage(ChatMessage.MESSAGE, username);
 			outputStream.writeObject(myMsg);
 			outputStream.flush();
