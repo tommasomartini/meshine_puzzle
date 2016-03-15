@@ -19,12 +19,8 @@ public class AppStarter {
 	 */
 	public static void main(String[] args) {
 		int port = 3003;
-		ServerGUI serverGui = new ServerGUI(port);		
-		ClientGUI clientGui = new ClientGUI("localhost", port);
-		
-//		TomClient tomClient = new TomClient(port);
-//		Thread clientThread = new Thread(tomClient);
-//		clientThread.start();
+		new ServerGUI(port);		
+		new ClientGUI("localhost", port);
 	}
 
 }

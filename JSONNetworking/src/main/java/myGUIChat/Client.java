@@ -7,33 +7,22 @@ import java.util.*;
 
 import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 
-/*
- * The Client that can be run both as a console or a GUI
- */
 public class Client {
 
 	private ObjectInputStream inputStream;		// to read from the socket
 	private ObjectOutputStream outputStream;		// to write on the socket
 	private Socket socket;
 
-	// if I use a GUI or not
 	private ClientGUI clientGUI;
 	
-	// the server, the port and the username
 	private String serverAddress, username;
 	private int port;
 
-	/*
-	 *  Constructor called by console mode
-	 *  server: the server address
-	 *  port: the port number
-	 *  username: the username
-	 */
-	Client(String _serverAddress, int _port, String _username) {
+	public Client(String _serverAddress, int _port, String _username) {
 		this(_serverAddress, _port, _username, null);
 	}
 
-	Client(String _serverAddress, int _port, String _username, ClientGUI _clientGUI) {
+	public Client(String _serverAddress, int _port, String _username, ClientGUI _clientGUI) {
 		this.serverAddress = _serverAddress;
 		this.port = _port;
 		this.username = _username;
@@ -58,10 +47,10 @@ public class Client {
 			return false;
 		}
 		new ListenFromServer().start();
-		System.out.println("creato!!!");
 		try {
 			ChatMessage myMsg = new ChatMessage(ChatMessage.MESSAGE, username);
 			outputStream.writeObject(myMsg);
+			outputStream.flush();
 		} catch (IOException eIO) {
 			display("Exception doing login : " + eIO);
 			disconnect();
@@ -80,7 +69,7 @@ public class Client {
 	/*
 	 * To send a message to the server
 	 */
-	void sendMessage(ChatMessage msg) {
+	public void sendMessage(ChatMessage msg) {
 		try {
 			outputStream.writeObject(msg);
 		}
@@ -114,11 +103,11 @@ public class Client {
 
 	class ListenFromServer extends Thread {
 		public void run() {
-			System.out.println("client prnto ad ascoltare il server");
 			boolean keepListeningFromServer = true;
 			while(keepListeningFromServer) {
 				try {
-					String msg = (String)inputStream.readObject();
+					ChatMessage currentChatMsg = (ChatMessage)inputStream.readObject();
+					String msg = currentChatMsg.getMessage();
 					clientGUI.append(msg);
 				} catch(IOException e) {
 					display("Server has close the connection: " + e);

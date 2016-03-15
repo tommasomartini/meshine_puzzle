@@ -16,7 +16,8 @@ public class ClientGUI extends JFrame implements ActionListener {
 	private JLabel lbUsernameOrMessage;
 	private JTextField tfUsernameOrMessage;
 	private JTextField tfServerAddress, tfServerPort;
-	private JButton btLogin, btLogout;
+	private JButton btLogin;
+//	private JButton btLogout;
 	private JTextArea taChat;
 	
 	private boolean connected;
@@ -60,11 +61,11 @@ public class ClientGUI extends JFrame implements ActionListener {
 		JPanel southPanel = new JPanel();
 		btLogin = new JButton("Login");
 		btLogin.addActionListener(this);
-		btLogout = new JButton("Logout");
-		btLogout.addActionListener(this);
-		btLogout.setEnabled(false);		
+//		btLogout = new JButton("Logout");
+//		btLogout.addActionListener(this);
+//		btLogout.setEnabled(false);		
 		southPanel.add(btLogin);
-		southPanel.add(btLogout);
+//		southPanel.add(btLogout);
 		add(southPanel, BorderLayout.SOUTH);
 
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -75,7 +76,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 	// called by the Client to append text in the TextArea 
 	public void append(String str) {
-		taChat.append(str);
+		taChat.append(str + "\n");
 		taChat.setCaretPosition(taChat.getText().length() - 1);
 	}
 	
@@ -83,7 +84,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 	// we reset our buttons, label, textfield
 	public void connectionFailed() {
 		btLogin.setEnabled(true);
-		btLogout.setEnabled(false);
+//		btLogout.setEnabled(false);
 		lbUsernameOrMessage.setText("Enter your username below");
 		tfUsernameOrMessage.setText("Anonymous");
 		// reset port number and host name as a construction time
@@ -99,10 +100,10 @@ public class ClientGUI extends JFrame implements ActionListener {
 		
 	public void actionPerformed(ActionEvent e) {
 		Object eventSource = e.getSource();		
-		if(eventSource == btLogout) {	// if I want to logout I let the server close the communication
-			client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
-			return;
-		}
+//		if(eventSource == btLogout) {	// if I want to logout I let the server close the communication
+//			client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
+//			return;
+//		}
 
 		// ok it is coming from the JTextField
 		if (connected) {
@@ -138,7 +139,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 			connected = true;
 			
 			btLogin.setEnabled(false);
-			btLogout.setEnabled(true);
+//			btLogout.setEnabled(true);
 			tfServerAddress.setEditable(false);
 			tfServerPort.setEditable(false);
 			tfUsernameOrMessage.addActionListener(this);

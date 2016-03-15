@@ -76,7 +76,10 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	
 	public void notifyConnection(boolean isConnected) {
 		connected = isConnected;
-		tfMessage.setEnabled(isConnected);
+		tfMessage.setEditable(isConnected);
+		tfMessage.addActionListener(this);
+		tfMessage.setText("");
+		tfMessage.requestFocus();
 		tfPortNumber.setEditable(!isConnected);
 	}
 	
@@ -85,6 +88,7 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 		Object eventSource = e.getSource();
 		if (eventSource == tfMessage) {
 			server.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tfMessage.getText()));
+			tfMessage.setText("");
 			return;
 		} else if (eventSource == btStopStart && server != null) {	// there is a server running. MAYBE it is connected to a client
 			server.stop();	// stop the server
@@ -93,7 +97,6 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 			btStopStart.setText("Start");	// the button is ready to make the server start
 			return;
 		} else if (eventSource == btStopStart && server == null) {	// there is no server up
-			System.out.println("Creo un nuovo server!");
 			int port;
 			try {
 				port = Integer.parseInt(tfPortNumber.getText().trim());

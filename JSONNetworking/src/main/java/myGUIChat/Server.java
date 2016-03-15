@@ -24,7 +24,6 @@ public class Server implements Runnable {
 		this.serverGUI = _serverGUI;
 		this.port = _port;
 		dateFormat = new SimpleDateFormat("HH:mm:ss");
-		System.out.println("Un nuovo server è stato creato");
 	}
 	
     /*
@@ -49,6 +48,14 @@ public class Server implements Runnable {
 			serverGUI.appendEvent(time + "\n");
 	}
 	
+	private void displayChat(String msg) {
+		String time = dateFormat.format(new Date()) + " " + msg;
+		if(serverGUI == null)
+			System.out.println(time);
+		else
+			serverGUI.appendChat(time + "\n");
+	}
+	
 	public void sendMessage(ChatMessage msg) {
 		try {
 			objOutputStream.writeObject(msg);
@@ -68,11 +75,8 @@ public class Server implements Runnable {
 			display("client connected!");
 			serverGUI.notifyConnection(true);
 			
-			InputStream clientIntputStream = clientSocket.getInputStream();
-			OutputStream clientOutputStream = clientSocket.getOutputStream();
-			
-			objInputStream  = new ObjectInputStream(clientIntputStream);
-			objOutputStream = new ObjectOutputStream(clientOutputStream);
+			objOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+			objInputStream = new ObjectInputStream(clientSocket.getInputStream());
 			
 			ClientThread clientThread = new ClientThread(clientSocket); 	// this thread listens to the client 
 			clientThread.start();
@@ -85,9 +89,7 @@ public class Server implements Runnable {
 	/** One instance of this thread will run for each client */
 	class ClientThread extends Thread {
 		// the socket where to listen/talk
-		Socket socket;
-		ObjectInputStream inputStream;
-		ObjectOutputStream outputStream;
+		Socket toListenSocket;
 		int id;
 		String username;
 		ChatMessage chatMessage;
@@ -95,14 +97,10 @@ public class Server implements Runnable {
 
 		ClientThread(Socket _socket) {
 			id = ++uniqueId;	// a unique id
-			this.socket = _socket;
-			System.out.println("Thread trying to create Object Input/Output Streams");
+			this.toListenSocket = _socket;
 			try {
-				// create output first
-				outputStream = new ObjectOutputStream(_socket.getOutputStream());
-				inputStream  = new ObjectInputStream(_socket.getInputStream());
-				// read the username
-				username = (String)inputStream.readObject();
+				ChatMessage firstChatMessage = (ChatMessage)objInputStream.readObject();
+				username = firstChatMessage.getMessage();
 				display(username + " just connected.");
 			} catch (IOException e) {
 				display("Exception creating new Input/output Streams: " + e);
@@ -115,7 +113,7 @@ public class Server implements Runnable {
 			boolean keepListeningFromClient = true;
 			while(keepListeningFromClient) {
 				try {
-					chatMessage = (ChatMessage)inputStream.readObject();
+					chatMessage = (ChatMessage)objInputStream.readObject();
 				} catch (IOException e) {
 					display(username + " Exception reading Streams: " + e);
 					break;				
@@ -125,6 +123,7 @@ public class Server implements Runnable {
 				String message = chatMessage.getMessage();
 				switch(chatMessage.getType()) {
 				case ChatMessage.MESSAGE:
+					displayChat(message);
 					break;
 				case ChatMessage.LOGOUT:
 					display(username + " disconnected with a LOGOUT message.");
@@ -137,16 +136,16 @@ public class Server implements Runnable {
 		
 		private void close() {
 			try {
-				if(outputStream != null) 
-					outputStream.close();
+				if(objOutputStream != null) 
+					objOutputStream.close();
 			} catch(Exception e) {}
 			try {
-				if(inputStream != null) 
-					inputStream.close();
+				if(objInputStream != null) 
+					objInputStream.close();
 			} catch(Exception e) {};
 			try {
-				if(socket != null) 
-					socket.close();
+				if(toListenSocket != null) 
+					toListenSocket.close();
 			} catch (Exception e) {}
 		}
 
