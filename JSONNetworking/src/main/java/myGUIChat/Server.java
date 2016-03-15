@@ -47,12 +47,12 @@ public class Server implements Runnable {
 		}
 	}
 	
-	private void display(String msg) {
-		serverGUI.appendEvent(msg + "\n");
+	private void displayEvent(String msg) {
+		serverGUI.appendEvent(msg);
 	}
 	
 	private void displayChat(String msg) {
-		serverGUI.appendChat(msg + "\n");
+		serverGUI.appendChat(msg);
 	}
 	
 //	public void sendMessage(ChatMessage msg) {
@@ -69,18 +69,18 @@ public class Server implements Runnable {
 			objOutputStream.writeObject(jsonPacket);
 		}
 		catch(IOException e) {
-			display("Exception writing to client: " + e);
+			displayEvent("Exception writing to client: " + e);
 		}
 	}
 	
 	public void run() {
 		try {
 			serverSocket = new ServerSocket(port);
-			display("Server waiting for the client on port " + port + "...");
+			displayEvent("Server waiting for the client on port " + port + "...");
 			
 			clientSocket = serverSocket.accept( );	// a client connects!
 			
-			display("client connected!");
+			displayEvent("client connected!");
 			serverGUI.notifyConnection(true);
 			
 			objOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
@@ -127,11 +127,11 @@ public class Server implements Runnable {
 					byte[] receivedObjData = firstMessage.getExtraData();
 					String dataString = new String(receivedObjData);
 					//				username = firstMessage.getMessage();
-					display(username + " connected at " + timeString + ".");
+					displayEvent(username + " connected at " + timeString + ".");
 					displayChat(username + "[" + timeString + "] > " + dataString);
 				}
 			} catch (IOException e) {
-				display("Exception creating new Input/output Streams: " + e);
+				displayEvent("Exception creating new Input/output Streams: " + e);
 				return;
 			} catch (ClassNotFoundException e) {}
             date = new Date().toString() + "\n";
@@ -159,7 +159,7 @@ public class Server implements Runnable {
 					int second = sendingTime.getInt("second");
 					timeString = String.format("%02d", hour) + ":" + String.format("%02d", minute) + ":" + String.format("%02d", second);
 				} catch (IOException e) {
-					display(username + " Exception reading Streams: " + e);
+					displayEvent(username + " Exception reading Streams: " + e);
 					break;				
 				} catch(ClassNotFoundException e2) {
 					break;
@@ -193,7 +193,6 @@ public class Server implements Runnable {
 						sendMessage(jsonPacket);
 						
 					} else if (msgType.equals(JSONPacket.ACK_STRING)) {
-						System.out.println("ACK RX BY SRERVR");
 						byte[] receivedObjData = jsonPacket.getExtraData();
 						String msgId = new String(receivedObjData);
 						displayChat(msgUsername + " ACK at " + timeString + ": " + msgId);

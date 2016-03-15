@@ -169,6 +169,9 @@ public class ClientGUI extends JFrame implements ActionListener {
 				
 //				addStorageMessage(now, messageString);
 				
+				String myOutputMsg = "Me [" + now + "] < " + messageString;
+				append(myOutputMsg);
+				
 				byte[] dataString = messageString.getBytes();
 				JSONPacket jsonPacket = new JSONPacket(jsonObj.toString(), dataString);
 				client.sendMessage(jsonPacket);

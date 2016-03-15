@@ -16,7 +16,7 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	
 	private JLabel lbMessage;
 	private JTextField tfMessage;
-	private JButton btStopStart;
+	private JButton btStart;
 	private JTextArea taChat, taEvent;
 	private JTextField tfPortNumber;
 	
@@ -37,10 +37,10 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 		JPanel portAndStartPanel = new JPanel();
 		portAndStartPanel.add(new JLabel("Port number: "));
 		tfPortNumber = new JTextField("  " + _port);
-		btStopStart = new JButton("Start");
-		btStopStart.addActionListener(this);
+		btStart = new JButton("Start");
+		btStart.addActionListener(this);
 		portAndStartPanel.add(tfPortNumber);
-		portAndStartPanel.add(btStopStart);
+		portAndStartPanel.add(btStart);
 		north.add(portAndStartPanel);
 		// 2 North)
 		lbMessage = new JLabel("Enter your message below", SwingConstants.CENTER);
@@ -55,11 +55,11 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 		JPanel center = new JPanel(new GridLayout(2,1));
 		taChat = new JTextArea(80,80);
 		taChat.setEditable(false);
-		appendChat("Chat room.\n");
+		appendChat("Chat room.");
 		center.add(new JScrollPane(taChat));
 		taEvent = new JTextArea(80,80);
 		taEvent.setEditable(false);
-		appendEvent("Events log.\n");
+		appendEvent("Events log.");
 		center.add(new JScrollPane(taEvent));	
 		add(center);
 		
@@ -72,12 +72,12 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	// append message to the two JTextArea
 	// position at the end
 	public void appendChat(String str) {
-		taChat.append(str);
+		taChat.append(str + '\n');
 		taChat.setCaretPosition(taChat.getText().length() - 1);
 	}
 	
 	public void appendEvent(String str) {
-		taEvent.append(str);
+		taEvent.append(str + '\n');
 		taEvent.setCaretPosition(taChat.getText().length() - 1);
 	}
 	
@@ -98,36 +98,35 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	public void actionPerformed(ActionEvent e) {
 		Object eventSource = e.getSource();
 		if (eventSource == tfMessage) {
-			JSONObject jsonObj = new JSONObject();
-			jsonObj.put("username", "YourServer");
-			jsonObj.put("is_client", new Boolean(false));
-			jsonObj.put("message_type", JSONPacket.MESSAGE_STRING);
-			String msgIDstr = "s" + ServerGUI.getNextServerMsgID();
-			jsonObj.put("message_id", msgIDstr);
-			String now = dateFormat.format(new Date());
-			String[] nowParts = now.split(":");
-			JSONObject dateObj = new JSONObject();
-			dateObj.put("hour", Integer.parseInt(nowParts[0]));
-			dateObj.put("minute", Integer.parseInt(nowParts[1]));
-			dateObj.put("second", Integer.parseInt(nowParts[2]));
-			jsonObj.put("message_time", dateObj);
-
 			String messageString = tfMessage.getText();
-			byte[] dataString = messageString.getBytes();
-			JSONPacket jsonPacket = new JSONPacket(jsonObj.toString(), dataString);
-			server.sendMessage(jsonPacket);
-			
-//			server.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tfMessage.getText()));
-			
-			tfMessage.setText("");
+			if (messageString.trim().length() > 0) {
+				JSONObject jsonObj = new JSONObject();
+				jsonObj.put("username", "YourServer");
+				jsonObj.put("is_client", new Boolean(false));
+				jsonObj.put("message_type", JSONPacket.MESSAGE_STRING);
+				String msgIDstr = "s" + ServerGUI.getNextServerMsgID();
+				jsonObj.put("message_id", msgIDstr);
+				String now = dateFormat.format(new Date());
+				String[] nowParts = now.split(":");
+				JSONObject dateObj = new JSONObject();
+				dateObj.put("hour", Integer.parseInt(nowParts[0]));
+				dateObj.put("minute", Integer.parseInt(nowParts[1]));
+				dateObj.put("second", Integer.parseInt(nowParts[2]));
+				jsonObj.put("message_time", dateObj);
+
+				String myOutputMsg = "Me [" + now + "] < " + messageString;
+				appendChat(myOutputMsg);
+
+				byte[] dataString = messageString.getBytes();
+				JSONPacket jsonPacket = new JSONPacket(jsonObj.toString(), dataString);
+				server.sendMessage(jsonPacket);
+
+				//				server.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tfMessage.getText()));
+
+				tfMessage.setText("");
+			}
 			return;
-		} else if (eventSource == btStopStart && server != null) {	// there is a server running. MAYBE it is connected to a client
-			server.stop();	// stop the server
-			server = null;	// delete it
-			tfPortNumber.setEditable(true);		// now I can set the port again
-			btStopStart.setText("Start");	// the button is ready to make the server start
-			return;
-		} else if (eventSource == btStopStart && server == null) {	// there is no server up
+		} else if (eventSource == btStart && server == null) {	// there is no server up. Let's tart one!
 			int port;
 			try {
 				port = Integer.parseInt(tfPortNumber.getText().trim());
@@ -140,7 +139,7 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 			server = new Server(port, this);
 			serverThread = new Thread(server);
 			serverThread.start(); 	// I have to put the server into a thread, otherwise my app sticks waiting for a client
-			btStopStart.setText("Stop");		// the button is used to stop this server
+			btStart.setEnabled(false);		// the button is used to stop this server
 			tfPortNumber.setEditable(false);	
 		}
 	}
