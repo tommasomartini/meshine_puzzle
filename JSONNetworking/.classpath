@@ -22,5 +22,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="/home/tom/app/secondEclipse/json-20140107.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

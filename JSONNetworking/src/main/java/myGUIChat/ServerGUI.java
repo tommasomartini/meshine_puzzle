@@ -3,6 +3,9 @@ package myGUIChat;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import org.json.JSONObject;
  
 public class ServerGUI extends JFrame implements ActionListener, WindowListener {
@@ -18,12 +21,14 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	private Server server;
 	
 	private Thread serverThread;
+	private SimpleDateFormat dateFormat;
 	
 	private boolean connected;
 	
 	public ServerGUI(int _port) {
 		super("Chat Server");
 		server = null;
+		dateFormat = new SimpleDateFormat("HH:mm:ss");
 		
 		JPanel north = new JPanel(new GridLayout(3, 1));
 		// 1 North)
@@ -87,7 +92,25 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	public void actionPerformed(ActionEvent e) {
 		Object eventSource = e.getSource();
 		if (eventSource == tfMessage) {
-			server.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tfMessage.getText()));
+			JSONObject jsonObj = new JSONObject();
+			jsonObj.put("username", "YourServer");
+			jsonObj.put("is_client", new Boolean(false));
+			jsonObj.put("message_type", JSONPacket.MESSAGE_STRING);
+			String now = dateFormat.format(new Date());
+			String[] nowParts = now.split(":");
+			JSONObject dateObj = new JSONObject();
+			dateObj.put("hour", Integer.parseInt(nowParts[0]));
+			dateObj.put("minute", Integer.parseInt(nowParts[1]));
+			dateObj.put("second", Integer.parseInt(nowParts[2]));
+			jsonObj.put("message_time", dateObj);
+
+			String messageString = tfMessage.getText();
+			byte[] dataString = messageString.getBytes();
+			JSONPacket jsonPacket = new JSONPacket(jsonObj.toString(), dataString);
+			server.sendMessage(jsonPacket);
+			
+//			server.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tfMessage.getText()));
+			
 			tfMessage.setText("");
 			return;
 		} else if (eventSource == btStopStart && server != null) {	// there is a server running. MAYBE it is connected to a client

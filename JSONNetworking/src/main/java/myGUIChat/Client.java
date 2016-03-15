@@ -51,23 +51,25 @@ public class Client {
 		}
 		new ListenFromServer().start();
 		try {
-			 JSONObject jsonObj = new JSONObject();
-		     jsonObj.put("username", username);
-		     jsonObj.put("isClient", new Boolean(true));
-		     jsonObj.put("message_type", "hello");
-		     String now = dateFormat.format(new Date());
-		     String[] nowParts = now.split(":");
-		     JSONObject dateObj = new JSONObject();
-		     dateObj.put("hour", Integer.parseInt(nowParts[0]));
-		     dateObj.put("minute", Integer.parseInt(nowParts[1]));
-		     dateObj.put("second", Integer.parseInt(nowParts[2]));
-		     jsonObj.put("message_time", dateObj);
-		     
-		     byte[] currentData = "Hello".getBytes();
-		     JSONPacket jsonPacket = new JSONPacket(jsonObj, currentData);
+			JSONObject jsonObj = new JSONObject();
+			jsonObj.put("username", username);
+			jsonObj.put("is_client", new Boolean(true));
+			jsonObj.put("message_type", JSONPacket.LOGIN_STRING);
+			String now = dateFormat.format(new Date());
+			String[] nowParts = now.split(":");
+			JSONObject dateObj = new JSONObject();
+			dateObj.put("hour", Integer.parseInt(nowParts[0]));
+			dateObj.put("minute", Integer.parseInt(nowParts[1]));
+			dateObj.put("second", Integer.parseInt(nowParts[2]));
+			jsonObj.put("message_time", dateObj);
+
+			String helloString = "Hello Server!";
+			byte[] dataString = helloString.getBytes();
+			JSONPacket jsonPacket = new JSONPacket(jsonObj.toString(), dataString);
+
+//			ChatMessage myMsg = new ChatMessage(ChatMessage.MESSAGE, username);
 			
-			ChatMessage myMsg = new ChatMessage(ChatMessage.MESSAGE, username);
-			outputStream.writeObject(myMsg);
+			outputStream.writeObject(jsonPacket);
 			outputStream.flush();
 		} catch (IOException eIO) {
 			display("Exception doing login : " + eIO);
@@ -87,9 +89,18 @@ public class Client {
 	/*
 	 * To send a message to the server
 	 */
-	public void sendMessage(ChatMessage msg) {
+//	public void sendMessage(ChatMessage msg) {
+//		try {
+//			outputStream.writeObject(msg);
+//		}
+//		catch(IOException e) {
+//			display("Exception writing to server: " + e);
+//		}
+//	}
+	
+	public void sendMessage(JSONPacket jsonPacket) {
 		try {
-			outputStream.writeObject(msg);
+			outputStream.writeObject(jsonPacket);
 		}
 		catch(IOException e) {
 			display("Exception writing to server: " + e);
@@ -120,13 +131,53 @@ public class Client {
 	}
 
 	class ListenFromServer extends Thread {
+		JSONPacket jsonPacket;
+		String msgType;
+		String msgUsername;
+		boolean isClient;
+		String timeString;
+		
 		public void run() {
 			boolean keepListeningFromServer = true;
 			while(keepListeningFromServer) {
 				try {
-					ChatMessage currentChatMsg = (ChatMessage)inputStream.readObject();
-					String msg = currentChatMsg.getMessage();
-					clientGUI.append(msg);
+					
+					jsonPacket = (JSONPacket)inputStream.readObject();
+
+					JSONObject rxPayload = new JSONObject(jsonPacket.getPayload());
+					msgType = rxPayload.getString("message_type");
+					msgUsername = rxPayload.getString("username");
+					isClient = rxPayload.getBoolean("is_client");
+					JSONObject sendingTime = rxPayload.getJSONObject("message_time");
+					int hour = sendingTime.getInt("hour");
+					int minute = sendingTime.getInt("minute");
+					int second = sendingTime.getInt("second");
+					timeString = hour + ":" + minute + ":" + second;
+					
+//					ChatMessage currentChatMsg = (ChatMessage)inputStream.readObject();
+//					String msg = currentChatMsg.getMessage();
+//					clientGUI.append(msg);
+					
+					if (!isClient && msgUsername.equals("YourServer")) {
+						if (msgType.equals(JSONPacket.LOGIN_STRING)) {
+							// do nothing
+						} else if (msgType.equals(JSONPacket.LOGOUT_STRING)) {
+							// do nothing
+						} else if (msgType.equals(JSONPacket.MESSAGE_STRING)) {
+							byte[] receivedObjData = jsonPacket.getExtraData();
+							String dataString = new String(receivedObjData);
+							clientGUI.append(msgUsername + "[" + timeString + "] > " + dataString);
+						} else if (msgType.equals(JSONPacket.ACK_STRING)) {
+							byte[] receivedObjData = jsonPacket.getExtraData();
+							String msgId = new String(receivedObjData);
+							System.out.println("Message sent at " + msgId + " received");
+							
+						} else {
+							// do nothing
+						}
+					}
+					
+					
 				} catch(IOException e) {
 					display("Server has close the connection: " + e);
 					if(clientGUI != null) 

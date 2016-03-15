@@ -4,6 +4,9 @@ package myGUIChat;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import org.json.JSONObject;
 
 
@@ -25,12 +28,15 @@ public class ClientGUI extends JFrame implements ActionListener {
 	private Client client;
 	private int defaultPort;
 	private String defaultHost;
+	private SimpleDateFormat dateFormat;
+	private String clientUsername;
 
 	// Constructor connection receiving a socket number
 	public ClientGUI(String host, int port) {
 		super("Chat Client");
 		defaultPort = port;
 		defaultHost = host;
+		dateFormat = new SimpleDateFormat("HH:mm:ss");
 		
 		JPanel northPanel = new JPanel(new GridLayout(3,1));	// panel 3 x 1
 		// 1 North)
@@ -78,7 +84,8 @@ public class ClientGUI extends JFrame implements ActionListener {
 	// called by the Client to append text in the TextArea 
 	public void append(String str) {
 		taChat.append(str + "\n");
-		taChat.setCaretPosition(taChat.getText().length() - 1);
+//		taChat.setCaretPosition(taChat.getText().length() - 1);
+		taChat.setCaretPosition(2);
 	}
 	
 	// called by the GUI is the connection failed
@@ -108,8 +115,29 @@ public class ClientGUI extends JFrame implements ActionListener {
 
 		// ok it is coming from the JTextField
 		if (connected) {
-			client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tfUsernameOrMessage.getText()));				
-			tfUsernameOrMessage.setText("");
+			String messageString = tfUsernameOrMessage.getText();
+			if (messageString.trim().length() > 0) {
+				JSONObject jsonObj = new JSONObject();
+				jsonObj.put("username", clientUsername);
+				jsonObj.put("is_client", new Boolean(true));
+				jsonObj.put("message_type", JSONPacket.MESSAGE_STRING);
+				String now = dateFormat.format(new Date());
+				String[] nowParts = now.split(":");
+				JSONObject dateObj = new JSONObject();
+				dateObj.put("hour", Integer.parseInt(nowParts[0]));
+				dateObj.put("minute", Integer.parseInt(nowParts[1]));
+				dateObj.put("second", Integer.parseInt(nowParts[2]));
+				jsonObj.put("message_time", dateObj);
+
+				
+				byte[] dataString = messageString.getBytes();
+				JSONPacket jsonPacket = new JSONPacket(jsonObj.toString(), dataString);
+				client.sendMessage(jsonPacket);
+				
+//				client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tfUsernameOrMessage.getText()));
+				
+				tfUsernameOrMessage.setText("");
+			}
 			return;
 		}
 
@@ -117,6 +145,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 			String username = tfUsernameOrMessage.getText().trim();		// take the username
 			if(username.length() == 0)	// empty userame -> do nothing
 				return;
+			clientUsername = username;
 			String serverAddress = tfServerAddress.getText().trim();	// empty address -> do nothing
 			if(serverAddress.length() == 0)
 				return;
