@@ -96,7 +96,8 @@ public class ClientGUI extends JFrame implements ActionListener {
 	// called by the Client to append text in the TextArea 
 	public void append(String str) {	
 		taChat.append(str + "\n");
-		taChat.setCaretPosition(taChat.getText().length() - 1);
+//		taChat.setCaretPosition(taChat.getText().length() - 1);
+		taChat.setCaretPosition(taChat.getDocument().getLength() - 1);
 	}
 	
 	// called by the GUI is the connection failed
@@ -145,6 +146,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 			tfServerAddress.setEditable(false);
 			tfServerPort.setEditable(false);
 			tfUsernameOrMessage.removeActionListener(this);
+			taChat.setText("Chat room.\n");
 			
 			client.stopClientWithMessage(jsonPacket);
 			connected = false;
@@ -171,7 +173,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 				dateObj.put("second", Integer.parseInt(nowParts[2]));
 				jsonObj.put("message_time", dateObj);
 								
-				String myOutputMsg = "Me [" + now + "] < " + messageString;
+				String myOutputMsg = "  Me [" + now + "] < " + messageString;
 				append(myOutputMsg);
 				
 				byte[] dataString = messageString.getBytes();

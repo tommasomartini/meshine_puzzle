@@ -85,14 +85,6 @@ public class Client {
 
 		listenFromServerThread.keepListeningFromServer = false;
 		listenFromServerThread.interrupt();
-//		try {
-//			inputStream.close();
-//			outputStream.close();
-//			socket.close();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
 		sendMessage(logoutPacket);
 		clientGUI = null;
 	}
@@ -101,7 +93,7 @@ public class Client {
 		if(clientGUI == null)
 			System.out.println(msg);      // println in console mode
 		else
-			clientGUI.append(msg + "\n");		// append to the ClientGUI JTextArea (or whatever)
+			clientGUI.append(msg);		// append to the ClientGUI JTextArea (or whatever)
 	}
 
 	public void sendMessage(JSONPacket jsonPacket) {
@@ -169,7 +161,7 @@ public class Client {
 						} else if (msgType.equals(JSONPacket.MESSAGE_STRING)) {
 							byte[] receivedObjData = jsonPacket.getExtraData();
 							String dataString = new String(receivedObjData);
-							clientGUI.append(msgUsername + "[" + timeString + "] > " + dataString);
+							display(msgUsername + "[" + timeString + "] > " + dataString);
 							
 							JSONObject ackObj = new JSONObject();
 							ackObj.put("username", username);
@@ -191,7 +183,7 @@ public class Client {
 						} else if (msgType.equals(JSONPacket.ACK_STRING)) {
 							byte[] receivedObjData = jsonPacket.getExtraData();
 							String msgId = new String(receivedObjData);
-							clientGUI.append(msgUsername + " ACK at [" + timeString + "] " + msgId);
+							display("ACK [" + timeString + "] " + msgId);
 						} else {
 							// do nothing
 						}

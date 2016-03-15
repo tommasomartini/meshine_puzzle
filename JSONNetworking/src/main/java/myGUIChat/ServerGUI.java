@@ -84,12 +84,14 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 
 	public void appendChat(String str) {
 		taChat.append(str + '\n');
-		taChat.setCaretPosition(taChat.getText().length() - 1);
+//		taChat.setCaretPosition(taChat.getText().length() - 1);
+		taChat.setCaretPosition(taChat.getDocument().getLength() - 1);
 	}
 	
 	public void appendEvent(String str) {
 		taEvent.append(str + '\n');
-		taEvent.setCaretPosition(taChat.getText().length() - 1);
+//		taEvent.setCaretPosition(taChat.getText().length() - 1);
+		taEvent.setCaretPosition(taEvent.getDocument().getLength() - 1);
 	}
 	
 	public static int getNextServerMsgID() {
@@ -101,7 +103,7 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 		tfMessage.addActionListener(this);
 		tfMessage.setText("");
 		tfMessage.requestFocus();
-		tfPortNumber.setEditable(!isConnected);
+		tfPortNumber.setEditable(false);
 	}
 	
 	public void actionPerformed(ActionEvent e) {
@@ -123,7 +125,7 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 				dateObj.put("second", Integer.parseInt(nowParts[2]));
 				jsonObj.put("message_time", dateObj);
 
-				String myOutputMsg = "Me [" + now + "] < " + messageString;
+				String myOutputMsg = "  Me [" + now + "] < " + messageString;
 				appendChat(myOutputMsg);
 
 				byte[] dataString = messageString.getBytes();

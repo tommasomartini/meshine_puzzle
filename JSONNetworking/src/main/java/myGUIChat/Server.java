@@ -78,7 +78,6 @@ public class Server implements Runnable {
 		Socket toListenSocket;
 		int id;
 		String username;
-		ChatMessage chatMessage;
 		JSONPacket jsonPacket;
 		String date;
 		String msgIDstr;
@@ -104,8 +103,8 @@ public class Server implements Runnable {
 					byte[] receivedObjData = firstMessage.getExtraData();
 					String dataString = new String(receivedObjData);
 					//				username = firstMessage.getMessage();
-					displayEvent(username + " connected at " + timeString + ".");
-					displayChat(username + "[" + timeString + "] > " + dataString);
+					serverGUI.appendEvent(username + " connected at " + timeString + ".");
+					serverGUI.appendChat(username + "[" + timeString + "] > " + dataString);
 				}
 			} catch (IOException e) {
 				displayEvent("Exception creating new Input/output Streams: " + e);
@@ -148,6 +147,7 @@ public class Server implements Runnable {
 					} else if (msgType.equals(JSONPacket.LOGOUT_STRING)) {
 						displayEvent(username + " requestes logout [" + timeString + "]");
 						keepListeningFromClient = false;
+						serverGUI.notifyConnection(false);
 						try {
 							objOutputStream.close();
 							objInputStream.close();
@@ -181,7 +181,7 @@ public class Server implements Runnable {
 					} else if (msgType.equals(JSONPacket.ACK_STRING)) {
 						byte[] receivedObjData = jsonPacket.getExtraData();
 						String msgId = new String(receivedObjData);
-						displayChat(msgUsername + " ACK at " + timeString + ": " + msgId);
+						displayChat("ACK [" + timeString + "] " + msgId);
 					} else {
 						// do nothing
 					}
@@ -192,20 +192,20 @@ public class Server implements Runnable {
 //			close();
 		}
 		
-		private void close() {
-			try {
-				if(objOutputStream != null) 
-					objOutputStream.close();
-			} catch(Exception e) {}
-			try {
-				if(objInputStream != null) 
-					objInputStream.close();
-			} catch(Exception e) {};
-			try {
-				if(toListenSocket != null) 
-					toListenSocket.close();
-			} catch (Exception e) {}
-		}
+//		private void close() {
+//			try {
+//				if(objOutputStream != null) 
+//					objOutputStream.close();
+//			} catch(Exception e) {}
+//			try {
+//				if(objInputStream != null) 
+//					objInputStream.close();
+//			} catch(Exception e) {};
+//			try {
+//				if(toListenSocket != null) 
+//					toListenSocket.close();
+//			} catch (Exception e) {}
+//		}
 	}
 }
 
