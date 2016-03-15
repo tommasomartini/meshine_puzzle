@@ -2,8 +2,6 @@ package myGUIChat;
 
 import java.io.Serializable;
 
-import org.json.JSONObject;
-
 public class JSONPacket implements Serializable {
 	
 	protected static final long serialVersionUID = 1112122200L;

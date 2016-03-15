@@ -1,10 +1,23 @@
 package myGUIChat;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 import org.json.JSONObject;
  
@@ -20,16 +33,17 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	private JTextArea taChat, taEvent;
 	private JTextField tfPortNumber;
 	
+	private int serverPort;
+	
 	private Server server;
 	
 	private Thread serverThread;
 	private SimpleDateFormat dateFormat;
 	
-	private boolean connected;
-	
 	public ServerGUI(int _port) {
 		super("Chat Server");
 		server = null;
+		serverPort = _port;
 		dateFormat = new SimpleDateFormat("HH:mm:ss");
 		
 		JPanel north = new JPanel(new GridLayout(3, 1));
@@ -63,14 +77,11 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 		center.add(new JScrollPane(taEvent));	
 		add(center);
 		
-		// need to be informed when the user click the close button on the frame
 		addWindowListener(this);
 		setSize(400, 600);
 		setVisible(true);
 	}		
 
-	// append message to the two JTextArea
-	// position at the end
 	public void appendChat(String str) {
 		taChat.append(str + '\n');
 		taChat.setCaretPosition(taChat.getText().length() - 1);
@@ -86,7 +97,6 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	}
 	
 	public void notifyConnection(boolean isConnected) {
-		connected = isConnected;
 		tfMessage.setEditable(isConnected);
 		tfMessage.addActionListener(this);
 		tfMessage.setText("");
@@ -94,7 +104,6 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 		tfPortNumber.setEditable(!isConnected);
 	}
 	
-	// start or stop where clicked
 	public void actionPerformed(ActionEvent e) {
 		Object eventSource = e.getSource();
 		if (eventSource == tfMessage) {
@@ -121,27 +130,30 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 				JSONPacket jsonPacket = new JSONPacket(jsonObj.toString(), dataString);
 				server.sendMessage(jsonPacket);
 
-				//				server.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tfMessage.getText()));
-
 				tfMessage.setText("");
 			}
-			return;
 		} else if (eventSource == btStart && server == null) {	// there is no server up. Let's tart one!
-			int port;
 			try {
-				port = Integer.parseInt(tfPortNumber.getText().trim());
+				serverPort = Integer.parseInt(tfPortNumber.getText().trim());
 			}
 			catch(Exception er) {
 				appendEvent("Invalid port number");
 				return;
 			}
 
-			server = new Server(port, this);
-			serverThread = new Thread(server);
-			serverThread.start(); 	// I have to put the server into a thread, otherwise my app sticks waiting for a client
 			btStart.setEnabled(false);		// the button is used to stop this server
-			tfPortNumber.setEditable(false);	
+			tfPortNumber.setEditable(false);
+			server = new Server(serverPort, this);
+			serverThread = new Thread(server);
+			serverThread.start(); 	// I have to put the server into a thread, otherwise my app sticks waiting for a client	
 		}
+	}
+	
+	public void startNewServer() {
+		serverThread.interrupt();	// actually it should be already be dead!
+		server = new Server(serverPort, this);
+		serverThread = new Thread(server);
+		serverThread.start(); 
 	}
 
 	/*
@@ -149,12 +161,16 @@ public class ServerGUI extends JFrame implements ActionListener, WindowListener 
 	 * I need to close the connection with the server to free the port
 	 */
 	public void windowClosing(WindowEvent e) {
-		if(server != null) {	// if my Server exist
-			try {
-				server.stop();			// ask the server to close the conection
-			} catch(Exception eClose) {}
-			server = null;
+		if (serverThread != null) {
+			serverThread.interrupt();	// actually it should be already be dead!
+			serverThread = null;
 		}
+//		if(server != null) {	// if my Server exist
+//			try {
+//				server.stop();			// ask the server to close the conection
+//			} catch(Exception eClose) {}
+//			server = null;
+//		}
 		dispose();	// dispose the frame
 		System.exit(0);
 	}

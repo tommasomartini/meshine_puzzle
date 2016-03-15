@@ -1,19 +1,25 @@
 package myGUIChat;
 
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 import org.json.JSONObject;
 
-
-/*
- * The Client with its GUI
- */
 public class ClientGUI extends JFrame implements ActionListener {
 
 	private static final long serialVersionUID = 1L;
@@ -24,7 +30,7 @@ public class ClientGUI extends JFrame implements ActionListener {
 	private JTextField tfUsernameOrMessage;
 	private JTextField tfServerAddress, tfServerPort;
 	private JButton btLogin;
-//	private JButton btLogout;
+	private JButton btLogout;
 	private JTextArea taChat;
 	
 	private boolean connected;
@@ -34,15 +40,11 @@ public class ClientGUI extends JFrame implements ActionListener {
 	private SimpleDateFormat dateFormat;
 	private String clientUsername;
 	
-//	private ArrayList<StorageMessage> pastMessages;
-
-	// Constructor connection receiving a socket number
 	public ClientGUI(String host, int port) {
 		super("Chat Client");
 		defaultPort = port;
 		defaultHost = host;
 		dateFormat = new SimpleDateFormat("HH:mm:ss");
-//		pastMessages = new ArrayList<StorageMessage>();
 		
 		JPanel northPanel = new JPanel(new GridLayout(3,1));	// panel 3 x 1
 		// 1 North)
@@ -74,11 +76,11 @@ public class ClientGUI extends JFrame implements ActionListener {
 		JPanel southPanel = new JPanel();
 		btLogin = new JButton("Login");
 		btLogin.addActionListener(this);
-//		btLogout = new JButton("Logout");
-//		btLogout.addActionListener(this);
-//		btLogout.setEnabled(false);		
+		btLogout = new JButton("Logout");
+		btLogout.addActionListener(this);
+		btLogout.setEnabled(false);		
 		southPanel.add(btLogin);
-//		southPanel.add(btLogout);
+		southPanel.add(btLogout);
 		add(southPanel, BorderLayout.SOUTH);
 
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -90,17 +92,6 @@ public class ClientGUI extends JFrame implements ActionListener {
 	public static int getNextClientMsgID() {
 		return clientMsgID++;
 	}
-	
-//	public void recieveServerMsg(String msg) {
-//		StorageMessage storageMessage = new StorageMessage(msg, _ID, _textString)
-//		pastMessages.add(msg);
-//		for (int i = 0; i < pastMessages.size(); i++) {
-//			taChat.append(pastMessages.get(i) + "\n");
-//			taChat.append(pastMessages.get(i) + "\n");
-//			taChat.append(pastMessages.get(i) + "\n");
-//			taChat.setCaretPosition(taChat.getText().length() - 1);
-//		}
-//	}
 
 	// called by the Client to append text in the TextArea 
 	public void append(String str) {	
@@ -112,42 +103,55 @@ public class ClientGUI extends JFrame implements ActionListener {
 	// we reset our buttons, label, textfield
 	public void connectionFailed() {
 		btLogin.setEnabled(true);
-//		btLogout.setEnabled(false);
+		btLogout.setEnabled(false);
 		lbUsernameOrMessage.setText("Enter your username below");
 		tfUsernameOrMessage.setText("Anonymous");
-		// reset port number and host name as a construction time
 		tfServerPort.setText("" + defaultPort);
 		tfServerAddress.setText(defaultHost);
-		// let the user change them
 		tfServerAddress.setEditable(false);
 		tfServerPort.setEditable(false);
-		// don't react to a <CR> after the username
 		tfUsernameOrMessage.removeActionListener(this);
 		connected = false;
 	}
-	
-//	public void addStorageMessage(String _timeString, String _textString) {
-////		String txt = "[" + _timeString + "]:" + "* " + _textString;
-//		StorageMessage storageMessage = new StorageMessage(_timeString, "c" + msgID++, _textString);
-//		pastMessages.add(storageMessage);
-//	}
-//	
-//	public void messageReceivedByServer(String _msgID) {
-//		StorageMessage storageMessage;
-//		for (int i = 0; i < pastMessages.size(); i++) {
-//			storageMessage = pastMessages.get(i);
-//			if (storageMessage.ID.equals(_msgID)) {
-//				storageMessage.ID[3] = 's';
-//			}
-//		}
-//	}
 		
 	public void actionPerformed(ActionEvent e) {
 		Object eventSource = e.getSource();		
-//		if(eventSource == btLogout) {	// if I want to logout I let the server close the communication
-//			client.sendMessage(new ChatMessage(ChatMessage.LOGOUT, ""));
-//			return;
-//		}
+		if(eventSource == btLogout) {	// if I want to logout I let the server close the communication
+			JSONObject jsonObj = new JSONObject();
+			jsonObj.put("username", clientUsername);
+			jsonObj.put("is_client", new Boolean(true));
+			jsonObj.put("message_type", JSONPacket.LOGOUT_STRING);
+			String msgIDstr = "c" + ClientGUI.getNextClientMsgID();
+			jsonObj.put("message_id", msgIDstr);
+			String now = dateFormat.format(new Date());
+			String[] nowParts = now.split(":");
+			JSONObject dateObj = new JSONObject();
+			dateObj.put("hour", Integer.parseInt(nowParts[0]));
+			dateObj.put("minute", Integer.parseInt(nowParts[1]));
+			dateObj.put("second", Integer.parseInt(nowParts[2]));
+			jsonObj.put("message_time", dateObj);
+							
+			String myOutputMsg = "Me [" + now + "] < LOGOUT";
+			append(myOutputMsg);
+			
+			JSONPacket jsonPacket = new JSONPacket(jsonObj.toString());
+			
+			tfUsernameOrMessage.setText("Anonymous");
+			lbUsernameOrMessage.setText("Enter your username below");
+			btLogin.setEnabled(true);
+			btLogout.setEnabled(false);
+			tfServerPort.setText("" + defaultPort);
+			tfServerAddress.setText(defaultHost);
+			tfServerAddress.setEditable(false);
+			tfServerPort.setEditable(false);
+			tfUsernameOrMessage.removeActionListener(this);
+			
+			client.stopClientWithMessage(jsonPacket);
+			connected = false;
+			client = null;
+			
+			return;
+		}
 
 		// ok it is coming from the JTextField
 		if (connected) {
@@ -166,18 +170,14 @@ public class ClientGUI extends JFrame implements ActionListener {
 				dateObj.put("minute", Integer.parseInt(nowParts[1]));
 				dateObj.put("second", Integer.parseInt(nowParts[2]));
 				jsonObj.put("message_time", dateObj);
-				
-//				addStorageMessage(now, messageString);
-				
+								
 				String myOutputMsg = "Me [" + now + "] < " + messageString;
 				append(myOutputMsg);
 				
 				byte[] dataString = messageString.getBytes();
 				JSONPacket jsonPacket = new JSONPacket(jsonObj.toString(), dataString);
 				client.sendMessage(jsonPacket);
-				
-//				client.sendMessage(new ChatMessage(ChatMessage.MESSAGE, tfUsernameOrMessage.getText()));
-				
+								
 				tfUsernameOrMessage.setText("");
 			}
 			return;
@@ -211,24 +211,11 @@ public class ClientGUI extends JFrame implements ActionListener {
 			connected = true;
 			
 			btLogin.setEnabled(false);
-//			btLogout.setEnabled(true);
+			btLogout.setEnabled(true);
 			tfServerAddress.setEditable(false);
 			tfServerPort.setEditable(false);
 			tfUsernameOrMessage.addActionListener(this);
 		}
 	}
-	
-//	class StorageMessage {
-//		String timeString;
-//		String ID;
-//		String textString;
-//		boolean receivedByServer;
-//		
-//		public StorageMessage(String _timeString, String _ID, String _textString) {
-//			timeString = _timeString;
-//			ID = _ID;
-//			textString = _textString;
-//		}
-//	}
 }
 

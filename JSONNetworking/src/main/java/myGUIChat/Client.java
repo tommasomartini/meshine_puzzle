@@ -15,6 +15,7 @@ public class Client {
 	private Socket socket;
 
 	private ClientGUI clientGUI;
+	private ListenFromServer listenFromServerThread;
 	private SimpleDateFormat dateFormat;
 	
 	private String serverAddress, username;
@@ -49,7 +50,8 @@ public class Client {
 			display("Exception creating new Input/output Streams: " + eIO);
 			return false;
 		}
-		new ListenFromServer().start();
+		listenFromServerThread = new ListenFromServer();
+		listenFromServerThread.start();
 		try {
 			JSONObject jsonObj = new JSONObject();
 			jsonObj.put("username", username);
@@ -68,8 +70,6 @@ public class Client {
 			String helloString = "Hello Server!";
 			byte[] dataString = helloString.getBytes();
 			JSONPacket jsonPacket = new JSONPacket(jsonObj.toString(), dataString);
-
-//			ChatMessage myMsg = new ChatMessage(ChatMessage.MESSAGE, username);
 			
 			outputStream.writeObject(jsonPacket);
 			outputStream.flush();
@@ -80,6 +80,22 @@ public class Client {
 		}
 		return true;
 	}
+	
+	public void stopClientWithMessage(JSONPacket logoutPacket) {
+
+		listenFromServerThread.keepListeningFromServer = false;
+		listenFromServerThread.interrupt();
+//		try {
+//			inputStream.close();
+//			outputStream.close();
+//			socket.close();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		sendMessage(logoutPacket);
+		clientGUI = null;
+	}
 
 	private void display(String msg) {
 		if(clientGUI == null)
@@ -87,19 +103,7 @@ public class Client {
 		else
 			clientGUI.append(msg + "\n");		// append to the ClientGUI JTextArea (or whatever)
 	}
-	
-	/*
-	 * To send a message to the server
-	 */
-//	public void sendMessage(ChatMessage msg) {
-//		try {
-//			outputStream.writeObject(msg);
-//		}
-//		catch(IOException e) {
-//			display("Exception writing to server: " + e);
-//		}
-//	}
-	
+
 	public void sendMessage(JSONPacket jsonPacket) {
 		try {
 			outputStream.writeObject(jsonPacket);
@@ -139,12 +143,11 @@ public class Client {
 		boolean isClient;
 		String timeString;
 		String msgIDstr;
+		public boolean keepListeningFromServer = true;
 		
 		public void run() {
-			boolean keepListeningFromServer = true;
 			while(keepListeningFromServer) {
 				try {
-					
 					jsonPacket = (JSONPacket)inputStream.readObject();
 
 					JSONObject rxPayload = new JSONObject(jsonPacket.getPayload());
@@ -157,11 +160,7 @@ public class Client {
 					int minute = sendingTime.getInt("minute");
 					int second = sendingTime.getInt("second");
 					timeString = String.format("%02d", hour) + ":" + String.format("%02d", minute) + ":" + String.format("%02d", second);
-					
-//					ChatMessage currentChatMsg = (ChatMessage)inputStream.readObject();
-//					String msg = currentChatMsg.getMessage();
-//					clientGUI.append(msg);
-					
+
 					if (!isClient && msgUsername.equals("YourServer")) {
 						if (msgType.equals(JSONPacket.LOGIN_STRING)) {
 							// do nothing
@@ -198,14 +197,13 @@ public class Client {
 						}
 					}
 					
-					
 				} catch(IOException e) {
 					display("Server has close the connection: " + e);
 					if(clientGUI != null) 
 						clientGUI.connectionFailed();
 					break;
 				} catch(ClassNotFoundException e2) {}
-			}
+			}		// while keepListening
 		}
 	}
 }

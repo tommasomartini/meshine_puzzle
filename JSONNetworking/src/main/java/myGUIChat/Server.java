@@ -5,11 +5,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Server implements Runnable {
@@ -33,20 +31,6 @@ public class Server implements Runnable {
 		dateFormat = new SimpleDateFormat("HH:mm:ss");
 	}
 	
-    /*
-     * For the GUI to stop the server
-     */
-	protected void stop() {
-		// connect to myself as Client to exit statement 
-		// Socket socket = serverSocket.accept();
-		try {
-			new Socket("localhost", port);
-		}
-		catch(Exception e) {
-			// nothing I can really do
-		}
-	}
-	
 	private void displayEvent(String msg) {
 		serverGUI.appendEvent(msg);
 	}
@@ -54,15 +38,6 @@ public class Server implements Runnable {
 	private void displayChat(String msg) {
 		serverGUI.appendChat(msg);
 	}
-	
-//	public void sendMessage(ChatMessage msg) {
-//		try {
-//			objOutputStream.writeObject(msg);
-//		}
-//		catch(IOException e) {
-//			display("Exception writing to server: " + e);
-//		}
-//	}
 	
 	public void sendMessage(JSONPacket jsonPacket) {
 		try {
@@ -76,19 +51,22 @@ public class Server implements Runnable {
 	public void run() {
 		try {
 			serverSocket = new ServerSocket(port);
-			displayEvent("Server waiting for the client on port " + port + "...");
-			
-			clientSocket = serverSocket.accept( );	// a client connects!
-			
-			displayEvent("client connected!");
-			serverGUI.notifyConnection(true);
-			
-			objOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-			objInputStream = new ObjectInputStream(clientSocket.getInputStream());
-			
-			ClientThread clientThread = new ClientThread(clientSocket); 	// this thread listens to the client 
-			clientThread.start();
-			
+
+			while (true) {
+
+				displayEvent("Server waiting for the client on port " + port + "...");
+				clientSocket = serverSocket.accept( );	// a client connects!
+
+				displayEvent("client connected!");
+				serverGUI.notifyConnection(true);
+
+				objOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
+				objInputStream = new ObjectInputStream(clientSocket.getInputStream());
+
+				ClientThread clientThread = new ClientThread(clientSocket); 	// this thread listens to the client 
+				clientThread.start();
+			}
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -103,20 +81,19 @@ public class Server implements Runnable {
 		ChatMessage chatMessage;
 		JSONPacket jsonPacket;
 		String date;
+		String msgIDstr;
 
 		ClientThread(Socket _socket) {
 			id = ++uniqueId;	// a unique id
 			this.toListenSocket = _socket;
-			try {
-//				ChatMessage firstChatMessage = (ChatMessage)objInputStream.readObject();
-				
+			try {				
 				JSONPacket firstMessage = (JSONPacket)objInputStream.readObject();
 				
 				JSONObject receivedObjPayload = new JSONObject(firstMessage.getPayload());
 				String msgType = receivedObjPayload.getString("message_type");
 				username = receivedObjPayload.getString("username");
 				boolean isClient = receivedObjPayload.getBoolean("is_client");
-				String msgIDstr = receivedObjPayload.getString("message_id");
+				msgIDstr = receivedObjPayload.getString("message_id");
 				JSONObject sendingTime = receivedObjPayload.getJSONObject("message_time");
 				int hour = sendingTime.getInt("hour");
 				int minute = sendingTime.getInt("minute");
@@ -169,7 +146,16 @@ public class Server implements Runnable {
 					if (msgType.equals(JSONPacket.LOGIN_STRING)) {
 						// do nothing
 					} else if (msgType.equals(JSONPacket.LOGOUT_STRING)) {
+						displayEvent(username + " requestes logout [" + timeString + "]");
 						keepListeningFromClient = false;
+						try {
+							objOutputStream.close();
+							objInputStream.close();
+							clientSocket.close();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					} else if (msgType.equals(JSONPacket.MESSAGE_STRING)) {
 						byte[] receivedObjData = jsonPacket.getExtraData();
 						String dataString = new String(receivedObjData);
@@ -200,19 +186,10 @@ public class Server implements Runnable {
 						// do nothing
 					}
 				}
-				
-//				String message = chatMessage.getMessage();
-//				switch(chatMessage.getType()) {
-//				case ChatMessage.MESSAGE:
-//					displayChat(message);
-//					break;
-//				case ChatMessage.LOGOUT:
-//					display(username + " disconnected with a LOGOUT message.");
-//					keepListeningFromClient = false;
-//					break;
-//				}
-			}
-			close();
+			}	// while cicle
+			
+//			serverGUI.startNewServer();
+//			close();
 		}
 		
 		private void close() {
@@ -229,24 +206,6 @@ public class Server implements Runnable {
 					toListenSocket.close();
 			} catch (Exception e) {}
 		}
-
-//		private boolean writeMsg(String msg) {
-//			// if Client is still connected send the message to it
-//			if(!socket.isConnected()) {
-//				close();
-//				return false;
-//			}
-//			// write the message to the stream
-//			try {
-//				outputStream.writeObject(msg);
-//			}
-//			// if an error occurs, do not abort just inform the user
-//			catch(IOException e) {
-//				display("Error sending message to " + username);
-//				display(e.toString());
-//			}
-//			return true;
-//		}
 	}
 }
 
